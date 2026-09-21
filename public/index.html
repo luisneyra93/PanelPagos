@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SPRING telecom — Pagos SPEI</title>
+  <link rel="icon" href="img/spring-logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css?v=12" />
+</head>
+<body>
+  <!-- ── Login ── -->
+  <section id="loginScreen" class="login-screen" aria-label="Iniciar sesión">
+    <div class="login-orb login-orb-a" aria-hidden="true"></div>
+    <div class="login-orb login-orb-b" aria-hidden="true"></div>
+    <div class="login-ring login-ring-a" aria-hidden="true"></div>
+    <div class="login-ring login-ring-b" aria-hidden="true"></div>
+
+    <div class="login-layout">
+      <aside class="login-brand">
+        <div class="login-logo-card">
+          <img src="img/spring-logo.png" alt="SPRING telecom" />
+        </div>
+        <h1>Panel de Pagos</h1>
+        <p>Genera y monitorea SPEI, CLABEs y acreditaciones desde un solo panel.</p>
+        <div class="login-features">
+          <div class="login-feature">
+            <span>SPEI</span>
+            <strong>Pagos En Tiempo Real</strong>
+          </div>
+          <div class="login-feature">
+            <span>CLABE</span>
+            <strong>Depósitos Únicos</strong>
+          </div>
+          <div class="login-feature">
+            <span>Control</span>
+            <strong>Proyectos Y Alertas</strong>
+          </div>
+        </div>
+      </aside>
+
+      <div class="login-card">
+        <p class="login-eyebrow">Bienvenido</p>
+        <h2>Iniciar Sesión</h2>
+        <p class="login-sub">Ingresa tus credenciales para continuar.</p>
+
+        <form id="formLogin" autocomplete="on">
+          <label>
+            Usuario
+            <input
+              type="text"
+              id="loginUser"
+              name="userName"
+              required
+              autocomplete="username"
+              placeholder="usuario@springtelecom.mx"
+            />
+          </label>
+
+          <label>
+            Contraseña
+            <div class="password-wrap">
+              <input
+                type="password"
+                id="loginPass"
+                name="password"
+                required
+                autocomplete="current-password"
+                placeholder="••••••••"
+              />
+              <button type="button" class="password-toggle" id="btnTogglePass" aria-label="Mostrar contraseña" title="Mostrar/ocultar">
+                <svg id="eyeOpen" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+                <svg id="eyeClosed" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" hidden>
+                  <path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a21.8 21.8 0 0 1 5.06-5.94"/>
+                  <path d="M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 7 11 7a21.8 21.8 0 0 1-2.16 3.19"/>
+                  <path d="M14.12 14.12A3 3 0 0 1 9.88 9.88"/>
+                  <line x1="1" y1="1" x2="23" y2="23"/>
+                </svg>
+              </button>
+            </div>
+          </label>
+
+          <p class="error" id="loginError" hidden></p>
+
+          <button class="btn login-submit" id="btnLogin" type="submit">Iniciar Sesión</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Dashboard ── -->
+  <div id="appShell" hidden>
+    <header class="topbar">
+      <div class="brand">
+        <img class="logo" src="img/spring-logo.png" alt="SPRING telecom" />
+      </div>
+      <div class="topbar-actions">
+        <span id="sessionUser" class="session-user" hidden></span>
+        <span id="autoDot" class="dot" title="Auto-refresh activo"></span>
+        <label class="switch-label">
+          <input type="checkbox" id="autoRefresh" checked />
+          Auto 30s
+        </label>
+        <button class="btn ghost" id="btnReload">Actualizar</button>
+        <button class="btn ghost" id="btnProjects">Proyectos</button>
+        <button class="btn primary" id="btnNew">+ Generar SPEI</button>
+        <button class="btn ghost" id="btnLogout" title="Cerrar sesión">Salir</button>
+      </div>
+    </header>
+
+    <main>
+      <!-- ── Tarjetas ── -->
+      <section class="cards" id="cards">
+        <button class="card" data-status="all">
+          <span class="card-label">Total</span>
+          <span class="card-value" id="cTotal">—</span>
+          <span class="card-sub" id="cTotalAmt">—</span>
+        </button>
+        <button class="card pending" data-status="pending">
+          <span class="card-label">Pendientes</span>
+          <span class="card-value" id="cPending">—</span>
+          <span class="card-sub" id="cPendingAmt">—</span>
+        </button>
+        <button class="card ok" data-status="accredited">
+          <span class="card-label">Acreditados</span>
+          <span class="card-value" id="cOk">—</span>
+          <span class="card-sub" id="cOkAmt">—</span>
+        </button>
+        <button class="card bad" data-status="failed">
+          <span class="card-label">Vencidos / fallidos</span>
+          <span class="card-value" id="cBad">—</span>
+          <span class="card-sub" id="cBadAmt">—</span>
+        </button>
+        <div class="card static">
+          <span class="card-label">Tasa de conversión</span>
+          <span class="card-value" id="cRate">—</span>
+          <span class="card-sub">acreditados / total</span>
+        </div>
+      </section>
+
+      <!-- ── Filtros ── -->
+      <section class="filters">
+        <input type="search" id="fSearch" placeholder="Buscar proyecto, orden, CLABE, referencia, email…" />
+        <label>Desde <input type="date" id="fFrom" /></label>
+        <label>Hasta <input type="date" id="fTo" /></label>
+        <select id="fLimit">
+          <option value="25">25 / pág</option>
+          <option value="50">50 / pág</option>
+          <option value="100">100 / pág</option>
+        </select>
+        <button class="btn ghost" id="btnClear">Limpiar</button>
+        <span class="chip" id="activeChip" hidden></span>
+      </section>
+
+      <!-- ── Grid ── -->
+      <section class="grid-wrap">
+        <table class="grid">
+          <thead>
+            <tr>
+              <th>Estado</th>
+              <th>Proyecto</th>
+              <th>Orden</th>
+              <th>CLABE</th>
+              <th>Referencia</th>
+              <th class="right">Monto</th>
+              <th>Pagador</th>
+              <th>Ref. externa</th>
+              <th>Creado</th>
+              <th>Expira</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="tbody">
+            <tr><td colspan="11" class="empty">Cargando…</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="pager">
+        <button class="btn ghost" id="btnPrev">‹ Anterior</button>
+        <span id="pageInfo" class="muted">—</span>
+        <button class="btn ghost" id="btnNext">Siguiente ›</button>
+      </section>
+    </main>
+
+    <!-- ── Modal: generar SPEI ── -->
+    <dialog id="dlgNew">
+      <form method="dialog" id="formNew">
+        <h2>Generar SPEI</h2>
+        <label>Proyecto
+          <select id="nBusiness" required>
+            <option value="">Cargando…</option>
+          </select>
+        </label>
+        <label>Monto (MXN)
+          <input type="number" id="nAmount" step="0.01" min="1" required placeholder="150.50" />
+        </label>
+        <label>Email del pagador
+          <input type="email" id="nEmail" required placeholder="comprador@ejemplo.com" />
+        </label>
+        <label>Descripción <span class="muted">(opcional)</span>
+          <input type="text" id="nDesc" placeholder="Pago de servicio" />
+        </label>
+        <label>Referencia externa <span class="muted">(opcional)</span>
+          <input type="text" id="nRef" placeholder="orden-123" />
+        </label>
+        <p class="error" id="nError" hidden></p>
+        <menu>
+          <button class="btn ghost" value="cancel" type="button" id="btnCancelNew">Cancelar</button>
+          <button class="btn primary" id="btnSubmitNew" type="submit">Generar</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <!-- ── Modal: proyectos (CRUD) ── -->
+    <dialog id="dlgProjects" class="dlg-wide">
+      <div class="projects-head">
+        <h2>Proyectos</h2>
+        <button class="btn ghost" type="button" id="btnCloseProjects">Cerrar</button>
+      </div>
+
+      <form id="formProject" class="project-form">
+        <input type="hidden" id="pId" value="" />
+        <label>Nombre
+          <input type="text" id="pName" required maxlength="100" placeholder="MiProyecto" autocomplete="off" />
+        </label>
+        <menu>
+          <button class="btn ghost" type="button" id="btnCancelProject" hidden>Cancelar edición</button>
+          <button class="btn primary" id="btnSaveProject" type="submit">Agregar</button>
+        </menu>
+        <p class="error" id="pError" hidden></p>
+      </form>
+
+      <div class="grid-wrap projects-grid">
+        <table class="grid">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nombre</th>
+              <th>Estatus</th>
+              <th>ApiKey</th>
+              <th>Registro</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="projectsBody">
+            <tr><td colspan="6" class="empty">Cargando…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </dialog>
+
+    <!-- ── Modal: detalle ── -->
+    <dialog id="dlgDetail">
+      <div id="detailBody"></div>
+      <menu>
+        <button class="btn ghost" id="btnCloseDetail">Cerrar</button>
+      </menu>
+    </dialog>
+  </div>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="app.js?v=12"></script>
+</body>
+</html>
