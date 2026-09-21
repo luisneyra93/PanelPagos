@@ -624,21 +624,52 @@ export class SpeiService implements OnModuleInit {
   }
 
   /** Reenvía el evento ya procesado a otra API si MP_WEBHOOK_FORWARD_URL está configurada. */
-  private async forward(payload: Record<string, any>) {
-    const url = this.config.get<string>('MP_WEBHOOK_FORWARD_URL');
-    if (!url?.trim()) return;
+  private async forward(payload: Record<string, any>, url?: string | null) {
+    const target = (url ?? this.config.get<string>('MP_WEBHOOK_FORWARD_URL'))?.trim();
+    if (!target) return false;
 
     try {
-      const res = await fetch(url, {
+      const res = await fetch(target, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
         signal: AbortSignal.timeout(5000),
       });
-      this.logger.log(`Forward → ${res.status} ${url}`);
+      this.logger.log(`Forward → ${res.status} ${target}`);
+      return res.ok;
     } catch (err) {
-      this.logger.warn(`No se pudo hacer forward: ${err.message}`);
+      this.logger.warn(`No se pudo hacer forward a ${target}: ${err.message}`);
+      return false;
     }
+  }
+
+  /**
+   * Notifica al proyecto dueño cuando el SPEI queda acreditado.
+   * Usa Projects.WebhookUrl; si no hay URL, no hace nada.
+   */
+  private async notifyProjectAccredited(payload: Record<string, any>) {
+    const idProject = payload?.id_project != null ? Number(payload.id_project) : null;
+    if (!idProject) {
+      this.logger.warn('Acreditación sin IdProject — no se notifica a proyecto');
+      return false;
+    }
+
+    const webhookUrl = await this.projectsService.getWebhookUrl(idProject);
+    if (!webhookUrl) {
+      this.logger.warn(
+        `Proyecto #${idProject} sin WebhookUrl — omitiendo notificación de acreditación`,
+      );
+      return false;
+    }
+
+    return this.forward(
+      {
+        event: 'spei.accredited',
+        ...payload,
+        status: 'processed',
+      },
+      webhookUrl,
+    );
   }
 
   // ───────────────────────────── Consultas MP ─────────────────────────────
@@ -747,12 +778,18 @@ export class SpeiService implements OnModuleInit {
 
       const row = reconciled ?? await this.repo.findOne({ where: { paymentId: data.payment_id } });
       if (row?.notified) {
-        this.logger.warn(`Webhook — forward omitido (ya notificado): pago ${data.payment_id}`);
+        this.logger.warn(`Webhook — notificación omitida (ya notificado): pago ${data.payment_id}`);
       } else {
+        // Forward global opcional (cualquier actualización)
         await this.forward(payload);
-        if (row) {
-          row.notified = true;
-          await this.repo.save(row);
+
+        // Aviso al proyecto solo cuando el pago quedó acreditado
+        if (accredited) {
+          await this.notifyProjectAccredited(payload);
+          if (row) {
+            row.notified = true;
+            await this.repo.save(row);
+          }
         }
       }
 

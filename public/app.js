@@ -298,12 +298,14 @@ async function loadProjectsGrid() {
   try {
     const rows = await api(PROJECTS_API);
     if (!rows.length) {
-      tbody.innerHTML = '<tr><td colspan="6" class="empty">No hay proyectos. Agrega el primero arriba.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" class="empty">No hay proyectos. Agrega el primero arriba.</td></tr>';
       return;
     }
     tbody.innerHTML = rows.map((p) => {
       const active = Number(p.estatus) === 1;
       const keyShort = p.key ? `${String(p.key).slice(0, 12)}…` : '—';
+      const wh = p.webhook_url ? String(p.webhook_url) : '';
+      const whShort = wh ? (wh.length > 36 ? `${wh.slice(0, 36)}…` : wh) : '—';
       return `
         <tr>
           <td class="mono">${p.id}</td>
@@ -313,9 +315,10 @@ async function loadProjectsGrid() {
             ${esc(keyShort)}
             ${p.key ? `<button class="copy" data-copy="${esc(p.key)}" title="Copiar ApiKey">⧉</button>` : ''}
           </td>
+          <td class="mono" title="${esc(wh)}">${esc(whShort)}</td>
           <td>${fecha(p.fh_registro)}</td>
           <td>
-            <button class="btn mini ghost" data-project-edit="${p.id}" data-name="${esc(p.name)}">Editar</button>
+            <button class="btn mini ghost" data-project-edit="${p.id}" data-name="${esc(p.name)}" data-webhook="${esc(wh)}">Editar</button>
             <button class="btn mini ghost" data-project-regen="${p.id}" title="Regenerar ApiKey">Key</button>
             <button class="btn mini ghost" data-project-toggle="${p.id}" data-estatus="${active ? 0 : 1}">
               ${active ? 'Desactivar' : 'Activar'}
@@ -325,7 +328,7 @@ async function loadProjectsGrid() {
         </tr>`;
     }).join('');
   } catch (e) {
-    tbody.innerHTML = `<tr><td colspan="6" class="empty">Error: ${esc(e.message)}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" class="empty">Error: ${esc(e.message)}</td></tr>`;
   }
 }
 
@@ -333,6 +336,7 @@ function resetProjectForm() {
   editingProjectId = null;
   $('pId').value = '';
   $('pName').value = '';
+  $('pWebhook').value = '';
   $('btnSaveProject').textContent = 'Agregar';
   $('btnCancelProject').hidden = true;
   $('pError').hidden = true;
@@ -353,6 +357,7 @@ async function submitProject(ev) {
 
   const body = {
     name: $('pName').value.trim(),
+    webhook_url: $('pWebhook').value.trim(),
   };
 
   try {
@@ -381,10 +386,11 @@ async function submitProject(ev) {
   }
 }
 
-function startEditProject(id, name) {
+function startEditProject(id, name, webhookUrl = '') {
   editingProjectId = Number(id);
   $('pId').value = id;
   $('pName').value = name;
+  $('pWebhook').value = webhookUrl || '';
   $('btnSaveProject').textContent = 'Guardar';
   $('btnCancelProject').hidden = false;
   $('pName').focus();
@@ -612,7 +618,11 @@ function initDashboard() {
 
     const pedit = e.target.closest('[data-project-edit]');
     if (pedit) {
-      return startEditProject(pedit.dataset.projectEdit, pedit.dataset.name);
+      return startEditProject(
+        pedit.dataset.projectEdit,
+        pedit.dataset.name,
+        pedit.dataset.webhook || '',
+      );
     }
 
     const ptoggle = e.target.closest('[data-project-toggle]');

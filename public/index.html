@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=12" />
+  <link rel="stylesheet" href="styles.css?v=13" />
 </head>
 <body>
   <!-- ── Login ── -->
@@ -224,35 +224,39 @@
         <button class="btn ghost" type="button" id="btnCloseProjects">Cerrar</button>
       </div>
 
-      <form id="formProject" class="project-form">
-        <input type="hidden" id="pId" value="" />
-        <label>Nombre
-          <input type="text" id="pName" required maxlength="100" placeholder="MiProyecto" autocomplete="off" />
-        </label>
-        <menu>
-          <button class="btn ghost" type="button" id="btnCancelProject" hidden>Cancelar edición</button>
-          <button class="btn primary" id="btnSaveProject" type="submit">Agregar</button>
-        </menu>
-        <p class="error" id="pError" hidden></p>
-      </form>
+    <form id="formProject" class="project-form">
+      <input type="hidden" id="pId" value="" />
+      <label>Nombre
+        <input type="text" id="pName" required maxlength="100" placeholder="MiProyecto" autocomplete="off" />
+      </label>
+      <label>Webhook URL <span class="muted">(acreditación)</span>
+        <input type="url" id="pWebhook" maxlength="500" placeholder="https://api.miproyecto.com/webhooks/spei" autocomplete="off" />
+      </label>
+      <menu>
+        <button class="btn ghost" type="button" id="btnCancelProject" hidden>Cancelar edición</button>
+        <button class="btn primary" id="btnSaveProject" type="submit">Agregar</button>
+      </menu>
+      <p class="error" id="pError" hidden></p>
+    </form>
 
-      <div class="grid-wrap projects-grid">
-        <table class="grid">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Nombre</th>
-              <th>Estatus</th>
-              <th>ApiKey</th>
-              <th>Registro</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody id="projectsBody">
-            <tr><td colspan="6" class="empty">Cargando…</td></tr>
-          </tbody>
-        </table>
-      </div>
+    <div class="grid-wrap projects-grid">
+      <table class="grid">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Estatus</th>
+            <th>ApiKey</th>
+            <th>Webhook</th>
+            <th>Registro</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="projectsBody">
+          <tr><td colspan="7" class="empty">Cargando…</td></tr>
+        </tbody>
+      </table>
+    </div>
     </dialog>
 
     <!-- ── Modal: detalle ── -->
@@ -266,6 +270,6 @@
 
   <div id="toast" class="toast" hidden></div>
 
-  <script src="app.js?v=12"></script>
+  <script src="app.js?v=13"></script>
 </body>
 </html>

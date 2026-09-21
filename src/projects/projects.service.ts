@@ -40,6 +40,7 @@ export class ProjectsService implements OnModuleInit {
           Estatus     TINYINT      NULL DEFAULT 1,
           FHRegistro  DATETIME     NULL DEFAULT CURRENT_TIMESTAMP,
           \`Key\`     TEXT         NULL,
+          WebhookUrl  VARCHAR(500) NULL,
           PRIMARY KEY (Id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
       `);
@@ -53,6 +54,17 @@ export class ProjectsService implements OnModuleInit {
           'ALTER TABLE Projects ADD COLUMN `Key` TEXT NULL AFTER FHRegistro',
         );
         this.logger.log('DB ✅ Columna Projects.Key agregada');
+      }
+
+      const whCols = await this.dataSource.query(
+        `SELECT COUNT(*) AS c FROM information_schema.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Projects' AND COLUMN_NAME = 'WebhookUrl'`,
+      );
+      if (Number(whCols[0]?.c) === 0) {
+        await this.dataSource.query(
+          'ALTER TABLE Projects ADD COLUMN WebhookUrl VARCHAR(500) NULL AFTER `Key`',
+        );
+        this.logger.log('DB ✅ Columna Projects.WebhookUrl agregada');
       }
 
       // Backfill de keys faltantes
@@ -74,6 +86,12 @@ export class ProjectsService implements OnModuleInit {
     }
   }
 
+  private normalizeWebhookUrl(value?: string | null): string | null {
+    if (value == null) return null;
+    const url = String(value).trim();
+    return url || null;
+  }
+
   private toItem(p: Project) {
     return {
       id: Number(p.id),
@@ -81,6 +99,7 @@ export class ProjectsService implements OnModuleInit {
       estatus: p.estatus == null ? 1 : Number(p.estatus),
       fh_registro: p.fhRegistro,
       key: p.key,
+      webhook_url: p.webhookUrl ?? null,
     };
   }
 
@@ -148,6 +167,7 @@ export class ProjectsService implements OnModuleInit {
       name,
       estatus: 1,
       key: this.generateApiKey(),
+      webhookUrl: this.normalizeWebhookUrl(dto.webhook_url),
     });
     const saved = await this.repo.save(row);
     this.logger.log(`Proyecto creado #${saved.id}: ${saved.name}`);
@@ -164,9 +184,18 @@ export class ProjectsService implements OnModuleInit {
       row.name = name;
     }
     if (dto.estatus !== undefined) row.estatus = dto.estatus;
+    if (dto.webhook_url !== undefined) {
+      row.webhookUrl = this.normalizeWebhookUrl(dto.webhook_url);
+    }
 
     const saved = await this.repo.save(row);
     return this.toItem(saved);
+  }
+
+  /** URL de callback del proyecto para notificar acreditaciones SPEI. */
+  async getWebhookUrl(id: number): Promise<string | null> {
+    const row = await this.repo.findOne({ where: { id } });
+    return this.normalizeWebhookUrl(row?.webhookUrl);
   }
 
   async regenerateKey(id: number) {

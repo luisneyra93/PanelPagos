@@ -23,4 +23,8 @@ export class Project {
   /** API key (hash) para integrar desde otros sistemas vía header ApiKey. */
   @Column({ type: 'text', nullable: true, name: 'Key' })
   key: string | null;
+
+  /** URL del proyecto para avisar cuando un SPEI se acredita. */
+  @Column({ type: 'varchar', length: 500, nullable: true, name: 'WebhookUrl' })
+  webhookUrl: string | null;
 }

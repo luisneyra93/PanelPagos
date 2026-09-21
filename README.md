@@ -66,7 +66,29 @@ https://tudominio.com/api/spei/webhook
 - Acepta tanto el id de la **orden** (`ORD...`) como el id numérico del **pago**; resuelve a la orden cuando existe.
 - **Concilia** el registro pendiente por `external_reference` + monto para no duplicar filas (MP entrega un id distinto al de creación).
 - Devuelve **200** si el recurso no existe (404 en MP) y **500** ante fallos transitorios, para que MP reintente.
-- Si `MP_WEBHOOK_FORWARD_URL` está configurada, reenvía el evento ya procesado una sola vez (bandera `Notified`).
+- Si `MP_WEBHOOK_FORWARD_URL` está configurada, reenvía el evento ya procesado (forward global opcional).
+- Cuando el pago queda **acreditado**, notifica al proyecto dueño con `POST` a su `WebhookUrl` (campo por proyecto en el dashboard), una sola vez (bandera `Notified`).
+
+### Payload al proyecto (`spei.accredited`)
+
+```json
+{
+  "event": "spei.accredited",
+  "order_id": "ORD...",
+  "payment_id": "PAY...",
+  "status": "processed",
+  "status_detail": "accredited",
+  "amount": 150.5,
+  "currency": "MXN",
+  "clabe": "...",
+  "referencia": "...",
+  "banco": "STP",
+  "external_reference": "orden-123",
+  "date_approved": "...",
+  "business_name": "MiProyecto",
+  "id_project": 3
+}
+```
 
 ## Notas de Mercado Pago
 
